@@ -22,7 +22,8 @@ const (
 	UserAgentHeader    = "User-Agent"
 )
 
-var parseHost = "api.parse.com"
+var parseHost string
+//var parseHost = "api.parse.com"
 var fieldNameCache map[reflect.Type]map[string]string = make(map[reflect.Type]map[string]string)
 var fieldCache = make(map[reflect.Type]reflect.StructField)
 
@@ -72,7 +73,7 @@ type clientT struct {
 var defaultClient *clientT
 
 // Initialize the parse library with your API keys
-func Initialize(appId, restKey, masterKey string) {
+func Initialize(appId, restKey, masterKey string, host string) {
 	defaultClient = &clientT{
 		appId:      appId,
 		restKey:    restKey,
@@ -80,6 +81,7 @@ func Initialize(appId, restKey, masterKey string) {
 		userAgent:  "github.com/kylemcc/parse",
 		httpClient: &http.Client{},
 	}
+	parseHost = host
 }
 
 // Set the timeout for requests to Parse
