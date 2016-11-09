@@ -540,7 +540,7 @@ func getEndpointBase(v interface{}) string {
 		p = path.Join("classes", cname)
 	}
 
-	p = path.Join(ParseVersion, p)
+	p = path.Join(parseMountPoint, p)
 	return p
 }
 
