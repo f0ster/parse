@@ -27,7 +27,7 @@ func (c *callFnT) method() string {
 func (c *callFnT) endpoint() (string, error) {
 	p := path.Join(ParseVersion, "functions", c.name)
 	u := url.URL{}
-	u.Scheme = "https"
+	u.Scheme = parseScheme
 	u.Host = parseHost
 	u.Path = p
 

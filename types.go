@@ -748,7 +748,7 @@ func (c *configRequestT) method() string {
 
 func (c *configRequestT) endpoint() (string, error) {
 	u := url.URL{}
-	u.Scheme = "https"
+	u.Scheme = parseScheme
 	u.Host = parseHost
 	u.Path = path.Join(ParseVersion, "config")
 	return u.String(), nil

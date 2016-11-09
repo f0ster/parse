@@ -959,7 +959,7 @@ func (q *queryT) endpoint() (string, error) {
 		return "", err
 	}
 
-	u.Scheme = "https"
+	u.Scheme = parseScheme
 	u.Host = parseHost
 	u.RawQuery = qs
 	u.Path = p

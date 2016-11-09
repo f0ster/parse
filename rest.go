@@ -23,6 +23,9 @@ const (
 )
 
 var parseHost string
+var parseScheme string
+
+
 //var parseHost = "api.parse.com"
 var fieldNameCache map[reflect.Type]map[string]string = make(map[reflect.Type]map[string]string)
 var fieldCache = make(map[reflect.Type]reflect.StructField)
@@ -73,7 +76,7 @@ type clientT struct {
 var defaultClient *clientT
 
 // Initialize the parse library with your API keys
-func Initialize(appId, restKey, masterKey string, host string) {
+func Initialize(appId, restKey, masterKey string, host string, scheme string) {
 	defaultClient = &clientT{
 		appId:      appId,
 		restKey:    restKey,
@@ -82,6 +85,7 @@ func Initialize(appId, restKey, masterKey string, host string) {
 		httpClient: &http.Client{},
 	}
 	parseHost = host
+	parseScheme = scheme
 }
 
 // Set the timeout for requests to Parse

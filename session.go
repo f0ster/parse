@@ -156,7 +156,7 @@ func (s *loginRequestT) method() string {
 
 func (s *loginRequestT) endpoint() (string, error) {
 	u := url.URL{}
-	u.Scheme = "https"
+	u.Scheme = parseScheme
 	u.Host = parseHost
 	if s.s != nil {
 		u.Path = "/1/users/me"
