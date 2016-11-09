@@ -24,6 +24,7 @@ const (
 
 var parseHost string
 var parseScheme string
+var parseMountPoint string
 
 
 //var parseHost = "api.parse.com"
@@ -76,7 +77,7 @@ type clientT struct {
 var defaultClient *clientT
 
 // Initialize the parse library with your API keys
-func Initialize(appId, restKey, masterKey string, host string, scheme string) {
+func Initialize(appId, restKey, masterKey string, host string, scheme string, mountPoint string) {
 	defaultClient = &clientT{
 		appId:      appId,
 		restKey:    restKey,
@@ -86,6 +87,7 @@ func Initialize(appId, restKey, masterKey string, host string, scheme string) {
 	}
 	parseHost = host
 	parseScheme = scheme
+	parseMountPoint = mountPoint
 }
 
 // Set the timeout for requests to Parse
