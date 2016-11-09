@@ -25,7 +25,7 @@ func (c *callFnT) method() string {
 }
 
 func (c *callFnT) endpoint() (string, error) {
-	p := path.Join(ParseVersion, "functions", c.name)
+	p := path.Join(parseMountPoint, "functions", c.name)
 	u := url.URL{}
 	u.Scheme = parseScheme
 	u.Host = parseHost

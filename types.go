@@ -750,7 +750,7 @@ func (c *configRequestT) endpoint() (string, error) {
 	u := url.URL{}
 	u.Scheme = parseScheme
 	u.Host = parseHost
-	u.Path = path.Join(ParseVersion, "config")
+	u.Path = path.Join(parseMountPoint, "config")
 	return u.String(), nil
 }
 
