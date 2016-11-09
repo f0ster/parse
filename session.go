@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"reflect"
+	"path"
 )
 
 type Session interface {
@@ -159,11 +160,11 @@ func (s *loginRequestT) endpoint() (string, error) {
 	u.Scheme = parseScheme
 	u.Host = parseHost
 	if s.s != nil {
-		u.Path = "/1/users/me"
+		u.Path = path.Join(parseMountPoint, "users/me")
 	} else if s.authdata != nil {
-		u.Path = "/1/users"
+		u.Path = path.Join(parseMountPoint, "users")
 	} else {
-		u.Path = "/1/login"
+		u.Path = path.Join(parseMountPoint, "login")
 	}
 
 	if s.username != "" && s.password != "" {
