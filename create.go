@@ -21,7 +21,7 @@ func (c *createT) method() string {
 	return "POST"
 }
 
-func (c *createT) endpoint(client *clientT) (string, error) {
+func (c *createT) endpoint(client *ParseClient) (string, error) {
 	p := getEndpointBase(c.v, client)
 	u := url.URL{}
 	u.Scheme = client.parseScheme
@@ -96,11 +96,11 @@ func (c *createT) contentType() string {
 //
 // Note: v should be a pointer to a struct whose name represents a Parse class,
 // or that implements the ClassName method
-func (c *clientT) Create(v interface{}, useMasterKey bool) error {
+func (c *ParseClient) Create(v interface{}, useMasterKey bool) error {
 	return c.create(v, useMasterKey, nil)
 }
 
-func (c *clientT) Signup(username string, password string, user interface{}) error {
+func (c *ParseClient) Signup(username string, password string, user interface{}) error {
 	cr := &createT{
 		v:                  user,
 		shouldUseMasterKey: false,
@@ -116,7 +116,7 @@ func (c *clientT) Signup(username string, password string, user interface{}) err
 	}
 }
 
-func (c *clientT) create(v interface{}, useMasterKey bool, currentSession *sessionT) error {
+func (c *ParseClient) create(v interface{}, useMasterKey bool, currentSession *sessionT) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("v must be a non-nil pointer")

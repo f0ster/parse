@@ -114,7 +114,7 @@ type Update interface {
 }
 
 type updateT struct {
-	client             clientT
+	client             ParseClient
 	inst               interface{}
 	values             map[string]updateOpT
 	shouldUseMasterKey bool
@@ -267,7 +267,7 @@ func (u *updateT) method() string {
 	return "PUT"
 }
 
-func (u *updateT) endpoint(client *clientT) (string, error) {
+func (u *updateT) endpoint(client *ParseClient) (string, error) {
 	_url := url.URL{}
 	p := getEndpointBase(u.inst, client)
 

@@ -14,7 +14,7 @@ type Session interface {
 	NewUpdate(v interface{}) (Update, error)
 	Create(v interface{}) error
 	Delete(v interface{}) error
-	CallFunction(client *clientT, name string, params Params, resp interface{}) error
+	CallFunction(client *ParseClient, name string, params Params, resp interface{}) error
 }
 
 type loginRequestT struct {
@@ -25,7 +25,7 @@ type loginRequestT struct {
 }
 
 type sessionT struct {
-	client       *clientT
+	client       *ParseClient
 	user         interface{}
 	sessionToken string
 }
@@ -35,7 +35,7 @@ type sessionT struct {
 // Optionally provide a custom User type to use in place of parse.User. If u is not
 // nil, it will be populated with the user's attributes, and will be accessible
 // by calling session.User().
-func (client *clientT) Login(username, password string, u interface{}) (Session, error) {
+func (client *ParseClient) Login(username, password string, u interface{}) (Session, error) {
 	var user interface{}
 
 	if u == nil {
@@ -58,7 +58,7 @@ func (client *clientT) Login(username, password string, u interface{}) (Session,
 	return s, nil
 }
 
-func (client *clientT) LoginFacebook(authData *FacebookAuthData, u interface{}) (Session, error) {
+func (client *ParseClient) LoginFacebook(authData *FacebookAuthData, u interface{}) (Session, error) {
 	var user interface{}
 
 	if u == nil {
@@ -86,7 +86,7 @@ func (client *clientT) LoginFacebook(authData *FacebookAuthData, u interface{}) 
 // Optionally provide a custom User type to use in place of parse.User. If user is
 // not nil, it will be populated with the user's attributes, and will be accessible
 // by calling session.User().
-func (client *clientT) Become(st string, u interface{}) (Session, error) {
+func (client *ParseClient) Become(st string, u interface{}) (Session, error) {
 	var user interface{}
 
 	if u == nil {
@@ -144,7 +144,7 @@ func (s *sessionT) Delete(v interface{}) error {
 	return s.client._delete(v, false, s)
 }
 
-func (s *sessionT) CallFunction(client *clientT, name string, params Params, resp interface{}) error {
+func (s *sessionT) CallFunction(client *ParseClient, name string, params Params, resp interface{}) error {
 	return callFn(client, name, params, resp, s)
 }
 
@@ -156,7 +156,7 @@ func (s *loginRequestT) method() string {
 	return "GET"
 }
 
-func (s *loginRequestT) endpoint(client *clientT) (string, error) {
+func (s *loginRequestT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost

@@ -10,7 +10,7 @@ import (
 
 type Params map[string]interface{}
 
-func CallFunction(client *clientT, name string, params Params, resp interface{}) error {
+func CallFunction(client *ParseClient, name string, params Params, resp interface{}) error {
 	return callFn(client, name, params, resp, nil)
 }
 
@@ -24,7 +24,7 @@ func (c *callFnT) method() string {
 	return "POST"
 }
 
-func (c *callFnT) endpoint(client *clientT) (string, error) {
+func (c *callFnT) endpoint(client *ParseClient) (string, error) {
 	p := path.Join(client.parseMountPoint, "functions", c.name)
 	u := url.URL{}
 	u.Scheme = client.parseScheme
@@ -55,7 +55,7 @@ type fnRespT struct {
 	Result interface{} `parse:"result"`
 }
 
-func callFn(client *clientT, name string, params Params, resp interface{}, currentSession *sessionT) error {
+func callFn(client *ParseClient, name string, params Params, resp interface{}, currentSession *sessionT) error {
 	rv := reflect.ValueOf(resp)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("resp must be a non-nil pointer")

@@ -221,7 +221,7 @@ type Query interface {
 
 type queryT struct {
 	inst   interface{}
-	client *clientT
+	client *ParseClient
 	op     opTypeT
 
 	instId    *string
@@ -241,7 +241,7 @@ type queryT struct {
 }
 
 // Create a new query instance.
-func NewQuery(v interface{}, client *clientT) (Query, error) {
+func NewQuery(v interface{}, client *ParseClient) (Query, error) {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return nil, errors.New("v must be a non-nil pointer")
@@ -947,7 +947,7 @@ func (q *queryT) method() string {
 	return "GET"
 }
 
-func (q *queryT) endpoint(client *clientT) (string, error) {
+func (q *queryT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
 	p := getEndpointBase(q.inst, client)
 

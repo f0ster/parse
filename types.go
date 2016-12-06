@@ -514,7 +514,7 @@ func getClassName(v interface{}) string {
 	}
 }
 
-func getEndpointBase(v interface{}, client *clientT) string {
+func getEndpointBase(v interface{}, client *ParseClient) string {
 	var p string
 	var inst interface{}
 
@@ -746,7 +746,7 @@ func (c *configRequestT) method() string {
 	return "GET"
 }
 
-func (c *configRequestT) endpoint(client *clientT) (string, error) {
+func (c *configRequestT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost
@@ -770,7 +770,7 @@ func (c *configRequestT) contentType() string {
 	return ""
 }
 
-func (client *clientT) GetConfig() (Config, error) {
+func (client *ParseClient) GetConfig() (Config, error) {
 	b, err := client.doRequest(&configRequestT{})
 	if err != nil {
 		return nil, err

@@ -27,7 +27,7 @@ var fieldCache = make(map[reflect.Type]reflect.StructField)
 
 type requestT interface {
 	method() string
-	endpoint(client *clientT) (string, error)
+	endpoint(client *ParseClient) (string, error)
 	body() (string, error)
 	useMasterKey() bool
 	session() *sessionT
@@ -57,7 +57,7 @@ func (e *parseErrorT) Message() string {
 	return e.ErrorMessage
 }
 
-type clientT struct {
+type ParseClient struct {
 	parseHost       string
 	parseScheme     string
 	parseMountPoint string
@@ -71,8 +71,8 @@ type clientT struct {
 }
 
 // CreateParseClient the parse library with your API keys
-func CreateParseClient(appId, restKey, masterKey string, host string, scheme string, mountPoint string) *clientT {
-	return &clientT{
+func CreateParseClient(appId, restKey, masterKey string, host string, scheme string, mountPoint string) *ParseClient {
+	return &ParseClient{
 		parseHost:       host,
 		parseScheme:     scheme,
 		parseMountPoint: mountPoint,
@@ -83,12 +83,12 @@ func CreateParseClient(appId, restKey, masterKey string, host string, scheme str
 	}
 }
 
-func (client *clientT) isHosted() bool {
+func (client *ParseClient) isHosted() bool {
 	return client.parseHost == "api.parse.com"
 }
 
 // SetHTTPTimeout Set the timeout for requests to Parse
-func (c *clientT) SetHTTPTimeout(t time.Duration) {
+func (c *ParseClient) SetHTTPTimeout(t time.Duration) {
 	c.httpClient.Timeout = t
 }
 
@@ -100,11 +100,11 @@ func (c *clientT) SetHTTPTimeout(t time.Duration) {
 // If this option is set, this library will restrict calling code to
 // a maximum number of requests per second. Requests exceeding this limit
 // will block for the appropriate period of time.
-func (c *clientT) SetRateLimit(limit, burst uint) {
+func (c *ParseClient) SetRateLimit(limit, burst uint) {
 	c.limiter = newRateLimiter(limit, burst)
 }
 
-func (c *clientT) doRequest(op requestT) ([]byte, error) {
+func (c *ParseClient) doRequest(op requestT) ([]byte, error) {
 	ep, err := op.endpoint(c)
 	if err != nil {
 		return nil, err

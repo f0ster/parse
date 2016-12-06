@@ -39,7 +39,7 @@ type PushNotification interface {
 }
 
 type pushT struct {
-	client             *clientT
+	client             *ParseClient
 	shouldUseMasterKey bool
 	channels           []string
 	expirationInterval int64
@@ -53,7 +53,7 @@ func (p *pushT) method() string {
 	return "POST"
 }
 
-func (p *pushT) endpoint(client *clientT) (string, error) {
+func (p *pushT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost
@@ -100,7 +100,7 @@ func (p *pushT) contentType() string {
 }
 
 // NewPushQuery Convenience function for creating a new query for use in SendPush.
-func NewPushQuery(client *clientT) Query {
+func NewPushQuery(client *ParseClient) Query {
 	q, _ := NewQuery(&Installation{}, client)
 	return q
 }
@@ -108,7 +108,7 @@ func NewPushQuery(client *clientT) Query {
 // Create a new Push Notifaction
 //
 // See the Push Notification Guide for more details: https://www.parse.com/docs/push_guide#sending/REST
-func NewPushNotification(client *clientT) PushNotification {
+func NewPushNotification(client *ParseClient) PushNotification {
 	return &pushT{client: client}
 }
 
