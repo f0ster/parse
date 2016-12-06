@@ -514,7 +514,7 @@ func getClassName(v interface{}) string {
 	}
 }
 
-func getEndpointBase(v interface{}) string {
+func getEndpointBase(v interface{}, client *clientT) string {
 	var p string
 	var inst interface{}
 
@@ -540,7 +540,7 @@ func getEndpointBase(v interface{}) string {
 		p = path.Join("classes", cname)
 	}
 
-	p = path.Join(parseMountPoint, p)
+	p = path.Join(client.parseMountPoint, p)
 	return p
 }
 
@@ -746,11 +746,11 @@ func (c *configRequestT) method() string {
 	return "GET"
 }
 
-func (c *configRequestT) endpoint() (string, error) {
+func (c *configRequestT) endpoint(client *clientT) (string, error) {
 	u := url.URL{}
-	u.Scheme = parseScheme
-	u.Host = parseHost
-	u.Path = path.Join(parseMountPoint, "config")
+	u.Scheme = client.parseScheme
+	u.Host = client.parseHost
+	u.Path = path.Join(client.parseMountPoint, "config")
 	return u.String(), nil
 }
 
@@ -770,8 +770,8 @@ func (c *configRequestT) contentType() string {
 	return ""
 }
 
-func GetConfig() (Config, error) {
-	b, err := defaultClient.doRequest(&configRequestT{})
+func (client *clientT) GetConfig() (Config, error) {
+	b, err := client.doRequest(&configRequestT{})
 	if err != nil {
 		return nil, err
 	}

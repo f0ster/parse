@@ -21,11 +21,11 @@ func (c *createT) method() string {
 	return "POST"
 }
 
-func (c *createT) endpoint() (string, error) {
-	p := getEndpointBase(c.v)
+func (c *createT) endpoint(client *clientT) (string, error) {
+	p := getEndpointBase(c.v, client)
 	u := url.URL{}
-	u.Scheme = parseScheme
-	u.Host = parseHost
+	u.Scheme = client.parseScheme
+	u.Host = client.parseHost
 	u.Path = p
 
 	return u.String(), nil
@@ -96,27 +96,27 @@ func (c *createT) contentType() string {
 //
 // Note: v should be a pointer to a struct whose name represents a Parse class,
 // or that implements the ClassName method
-func Create(v interface{}, useMasterKey bool) error {
-	return create(v, useMasterKey, nil)
+func (c *clientT) Create(v interface{}, useMasterKey bool) error {
+	return c.create(v, useMasterKey, nil)
 }
 
-func Signup(username string, password string, user interface{}) error {
+func (c *clientT) Signup(username string, password string, user interface{}) error {
 	cr := &createT{
-		v:                  	user,
-		shouldUseMasterKey: 	false,
-		currentSession:     	nil,
-		isUser:             	true,
-		username:		username,
-		password:           	password,
+		v:                  user,
+		shouldUseMasterKey: false,
+		currentSession:     nil,
+		isUser:             true,
+		username:           username,
+		password:           password,
 	}
-	if b, err := defaultClient.doRequest(cr); err != nil {
+	if b, err := c.doRequest(cr); err != nil {
 		return err
 	} else {
 		return handleResponse(b, user)
 	}
 }
 
-func create(v interface{}, useMasterKey bool, currentSession *sessionT) error {
+func (c *clientT) create(v interface{}, useMasterKey bool, currentSession *sessionT) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("v must be a non-nil pointer")
@@ -127,7 +127,7 @@ func create(v interface{}, useMasterKey bool, currentSession *sessionT) error {
 		shouldUseMasterKey: useMasterKey,
 		currentSession:     currentSession,
 	}
-	if b, err := defaultClient.doRequest(cr); err != nil {
+	if b, err := c.doRequest(cr); err != nil {
 		return err
 	} else {
 		return handleResponse(b, v)

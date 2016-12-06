@@ -19,13 +19,7 @@ const (
 	RestKeyHeader      = "X-Parse-REST-API-Key"
 	MasterKeyHeader    = "X-Parse-Master-Key"
 	SessionTokenHeader = "X-Parse-Session-Token"
-	UserAgentHeader    = "User-Agent"
 )
-
-var parseHost string
-var parseScheme string
-var parseMountPoint string
-
 
 //var parseHost = "api.parse.com"
 var fieldNameCache map[reflect.Type]map[string]string = make(map[reflect.Type]map[string]string)
@@ -33,7 +27,7 @@ var fieldCache = make(map[reflect.Type]reflect.StructField)
 
 type requestT interface {
 	method() string
-	endpoint() (string, error)
+	endpoint(client *clientT) (string, error)
 	body() (string, error)
 	useMasterKey() bool
 	session() *sessionT
@@ -64,57 +58,39 @@ func (e *parseErrorT) Message() string {
 }
 
 type clientT struct {
-	appId     string
-	restKey   string
-	masterKey string
+	isHosted        bool
+	parseHost       string
+	parseScheme     string
+	parseMountPoint string
+	appId           string
+	restKey         string
+	masterKey       string
 
-	userAgent  string
 	httpClient *http.Client
 
 	limiter limiter
 }
 
-var defaultClient *clientT
-
-// Initialize the parse library with your API keys
-func Initialize(appId, restKey, masterKey string, host string, scheme string, mountPoint string) {
-	defaultClient = &clientT{
-		appId:      appId,
-		restKey:    restKey,
-		masterKey:  masterKey,
-		userAgent:  "github.com/kylemcc/parse",
-		httpClient: &http.Client{},
+// CreateParseClient the parse library with your API keys
+func CreateParseClient(appId, restKey, masterKey string, host string, scheme string, mountPoint string, isHosted bool) *clientT {
+	return &clientT{
+		isHosted:        isHosted,
+		parseHost:       host,
+		parseScheme:     scheme,
+		parseMountPoint: mountPoint,
+		appId:           appId,
+		restKey:         restKey,
+		masterKey:       masterKey,
+		httpClient:      &http.Client{},
 	}
-	parseHost = host
-	parseScheme = scheme
-	parseMountPoint = mountPoint
 }
 
-// Set the timeout for requests to Parse
-//
-// Returns an error if called before parse.Initialize
-func SetHTTPTimeout(t time.Duration) error {
-	if defaultClient == nil {
-		return errors.New("parse.Initialize must be called before parse.SetHTTPTimeout")
-	}
-
-	defaultClient.httpClient.Timeout = t
-	return nil
+// SetHTTPTimeout Set the timeout for requests to Parse
+func (c *clientT) SetHTTPTimeout(t time.Duration) {
+	c.httpClient.Timeout = t
 }
 
-// Set the User Agent to be specified for requests against Parse
-//
-// Returns an error if called before parse.Initialize
-func SetUserAgent(ua string) error {
-	if defaultClient == nil {
-		return errors.New("parse.Initialize must be called before parse.SetUserAgent")
-	}
-
-	defaultClient.userAgent = ua
-	return nil
-}
-
-// Set the maximum number of requests per second, with an optional
+// SetRateLimit Sets the maximum number of requests per second, with an optional
 // burst rate.
 //
 // Returns an error if called before parse.Initialize
@@ -122,26 +98,12 @@ func SetUserAgent(ua string) error {
 // If this option is set, this library will restrict calling code to
 // a maximum number of requests per second. Requests exceeding this limit
 // will block for the appropriate period of time.
-func SetRateLimit(limit, burst uint) error {
-	if defaultClient == nil {
-		return errors.New("parse.Initialize must be called before parse.SetHTTPTimeout")
-	}
-
-	defaultClient.limiter = newRateLimiter(limit, burst)
-	return nil
-}
-
-func SetHTTPClient(c *http.Client) error {
-	if defaultClient == nil {
-		return errors.New("parse.Initialize must be called before parse.SetHTTPTimeout")
-	}
-
-	defaultClient.httpClient = c
-	return nil
+func (c *clientT) SetRateLimit(limit, burst uint) {
+	c.limiter = newRateLimiter(limit, burst)
 }
 
 func (c *clientT) doRequest(op requestT) ([]byte, error) {
-	ep, err := op.endpoint()
+	ep, err := op.endpoint(c)
 	if err != nil {
 		return nil, err
 	}
@@ -161,8 +123,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		return nil, err
 	}
 
-	req.Header.Add(UserAgentHeader, defaultClient.userAgent)
-	req.Header.Add(AppIdHeader, defaultClient.appId)
+	req.Header.Add(AppIdHeader, c.appId)
 	if op.useMasterKey() && c.masterKey != "" && op.session() == nil {
 		req.Header.Add(MasterKeyHeader, c.masterKey)
 	} else {
@@ -183,7 +144,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		c.limiter.limit()
 	}
 
-	resp, err := defaultClient.httpClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

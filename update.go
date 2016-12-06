@@ -114,6 +114,7 @@ type Update interface {
 }
 
 type updateT struct {
+	client             clientT
 	inst               interface{}
 	values             map[string]updateOpT
 	shouldUseMasterKey bool
@@ -250,7 +251,7 @@ func (u *updateT) Execute() (err error) {
 			}
 		}
 	}
-	if b, err := defaultClient.doRequest(u); err != nil {
+	if b, err := u.client.doRequest(u); err != nil {
 		return err
 	} else {
 		return handleResponse(b, u.inst)
@@ -266,9 +267,9 @@ func (u *updateT) method() string {
 	return "PUT"
 }
 
-func (u *updateT) endpoint() (string, error) {
+func (u *updateT) endpoint(client *clientT) (string, error) {
 	_url := url.URL{}
-	p := getEndpointBase(u.inst)
+	p := getEndpointBase(u.inst, client)
 
 	rv := reflect.ValueOf(u.inst)
 	rvi := reflect.Indirect(rv)
@@ -282,8 +283,8 @@ func (u *updateT) endpoint() (string, error) {
 		return "", fmt.Errorf("can not update value - type has no Id field")
 	}
 
-	_url.Scheme = parseScheme
-	_url.Host = parseHost
+	_url.Scheme = client.parseScheme
+	_url.Host = client.parseHost
 	_url.Path = p
 
 	return _url.String(), nil

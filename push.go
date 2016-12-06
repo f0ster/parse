@@ -39,6 +39,7 @@ type PushNotification interface {
 }
 
 type pushT struct {
+	client             *clientT
 	shouldUseMasterKey bool
 	channels           []string
 	expirationInterval int64
@@ -52,10 +53,10 @@ func (p *pushT) method() string {
 	return "POST"
 }
 
-func (p *pushT) endpoint() (string, error) {
+func (p *pushT) endpoint(client *clientT) (string, error) {
 	u := url.URL{}
-	u.Scheme = parseScheme
-	u.Host = parseHost
+	u.Scheme = client.parseScheme
+	u.Host = client.parseHost
 	u.Path = "/1/push"
 
 	return u.String(), nil
@@ -98,17 +99,17 @@ func (p *pushT) contentType() string {
 	return "application/json"
 }
 
-// Convenience function for creating a new query for use in SendPush.
-func NewPushQuery() Query {
-	q, _ := NewQuery(&Installation{})
+// NewPushQuery Convenience function for creating a new query for use in SendPush.
+func NewPushQuery(client *clientT) Query {
+	q, _ := NewQuery(&Installation{}, client)
 	return q
 }
 
 // Create a new Push Notifaction
 //
 // See the Push Notification Guide for more details: https://www.parse.com/docs/push_guide#sending/REST
-func NewPushNotification() PushNotification {
-	return &pushT{}
+func NewPushNotification(client *clientT) PushNotification {
+	return &pushT{client: client}
 }
 
 func (p *pushT) Where(q Query) PushNotification {
@@ -144,7 +145,7 @@ func (p *pushT) Data(d map[string]interface{}) PushNotification {
 }
 
 func (p *pushT) Send() error {
-	b, err := defaultClient.doRequest(p)
+	b, err := p.client.doRequest(p)
 	data := map[string]interface{}{}
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
