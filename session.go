@@ -127,7 +127,7 @@ func (s *sessionT) NewQuery(v interface{}) (Query, error) {
 }
 
 func (s *sessionT) NewUpdate(v interface{}) (Update, error) {
-	u, err := NewUpdate(v)
+	u, err := NewUpdate(v, s.client)
 	if err == nil {
 		if ut, ok := u.(*updateT); ok {
 			ut.currentSession = s
