@@ -161,7 +161,7 @@ func (s *loginRequestT) endpoint(client *clientT) (string, error) {
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost
 
-	if !client.isHosted {
+	if !client.isHosted() {
 		if s.s != nil {
 			u.Path = "/1/users/me"
 		} else if s.authdata != nil {

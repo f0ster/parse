@@ -58,7 +58,6 @@ func (e *parseErrorT) Message() string {
 }
 
 type clientT struct {
-	isHosted        bool
 	parseHost       string
 	parseScheme     string
 	parseMountPoint string
@@ -72,9 +71,8 @@ type clientT struct {
 }
 
 // CreateParseClient the parse library with your API keys
-func CreateParseClient(appId, restKey, masterKey string, host string, scheme string, mountPoint string, isHosted bool) *clientT {
+func CreateParseClient(appId, restKey, masterKey string, host string, scheme string, mountPoint string) *clientT {
 	return &clientT{
-		isHosted:        isHosted,
 		parseHost:       host,
 		parseScheme:     scheme,
 		parseMountPoint: mountPoint,
@@ -83,6 +81,10 @@ func CreateParseClient(appId, restKey, masterKey string, host string, scheme str
 		masterKey:       masterKey,
 		httpClient:      &http.Client{},
 	}
+}
+
+func (client *clientT) isHosted() bool {
+	return client.parseHost == "api.parse.com"
 }
 
 // SetHTTPTimeout Set the timeout for requests to Parse
