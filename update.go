@@ -114,7 +114,7 @@ type Update interface {
 }
 
 type updateT struct {
-	client             ParseClient
+	client             *ParseClient
 	inst               interface{}
 	values             map[string]updateOpT
 	shouldUseMasterKey bool
@@ -125,7 +125,7 @@ type updateT struct {
 //
 // Note: v should be a pointer to a struct whose name represents a Parse class,
 // or that implements the ClassName method
-func NewUpdate(v interface{}) (Update, error) {
+func NewUpdate(v interface{}, client *ParseClient) (Update, error) {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return nil, errors.New("v must be a non-nil pointer")
@@ -133,6 +133,7 @@ func NewUpdate(v interface{}) (Update, error) {
 
 	return &updateT{
 		inst:   v,
+		client: client,
 		values: map[string]updateOpT{},
 	}, nil
 }
@@ -311,12 +312,12 @@ func (u *updateT) contentType() string {
 	return "application/json"
 }
 
-func LinkFacebookAccount(u *User, a *FacebookAuthData) error {
+func (client *ParseClient) LinkFacebookAccount(u *User, a *FacebookAuthData) error {
 	if u.Id == "" {
 		return errors.New("user Id field must not be empty")
 	}
 
-	up, _ := NewUpdate(u)
+	up, _ := NewUpdate(u, client)
 	up.Set("authData", AuthData{Facebook: a})
 	up.UseMasterKey()
 	return up.Execute()
