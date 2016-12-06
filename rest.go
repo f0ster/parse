@@ -174,9 +174,10 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 
 	req.Header.Add("X-Parse-Revocable-Session", "1")
 
-	if c := op.contentType(); c != "" {
-		req.Header.Add("Content-Type", op.contentType())
-	}
+	req.Header.Add("Content-Type", "application/json")
+	//if c := op.contentType(); c != "" {
+	//	req.Header.Add("Content-Type", op.contentType())
+	//}
 	req.Header.Add("Accept-Encoding", "gzip")
 
 	if c.limiter != nil {
