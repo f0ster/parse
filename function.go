@@ -25,11 +25,14 @@ func (c *callFnT) method() string {
 }
 
 func (c *callFnT) endpoint(client *ParseClient) (string, error) {
-	p := path.Join(client.parseMountPoint, "functions", c.name)
 	u := url.URL{}
+	if client.isHosted() {
+		u.Path = path.Join(client.parseMountPoint, "functions", c.name)
+	} else {
+		u.Path = path.Join(client.version, "functions", c.name)
+	}
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost
-	u.Path = p
 
 	return u.String(), nil
 }

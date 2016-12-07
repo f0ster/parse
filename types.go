@@ -540,7 +540,11 @@ func getEndpointBase(v interface{}, client *ParseClient) string {
 		p = path.Join("classes", cname)
 	}
 
-	p = path.Join(client.parseMountPoint, p)
+	if client.isHosted() {
+		p = path.Join(client.parseMountPoint, p)
+	} else {
+		p = path.Join(client.version, p)
+	}
 	return p
 }
 

@@ -163,11 +163,11 @@ func (s *loginRequestT) endpoint(client *ParseClient) (string, error) {
 
 	if !client.isHosted() {
 		if s.s != nil {
-			u.Path = "/1/users/me"
+			u.Path = path.Join(client.version, "users/me")
 		} else if s.authdata != nil {
-			u.Path = "/1/users"
+			u.Path = path.Join(client.version, "users")
 		} else {
-			u.Path = "/1/login"
+			u.Path = path.Join(client.version, "login")
 		}
 	} else {
 		if s.s != nil {

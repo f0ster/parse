@@ -58,6 +58,7 @@ func (e *parseErrorT) Message() string {
 }
 
 type ParseClient struct {
+	version         string
 	parseHost       string
 	parseScheme     string
 	parseMountPoint string
