@@ -10,8 +10,8 @@ import (
 
 type Params map[string]interface{}
 
-func CallFunction(name string, params Params, resp interface{}) error {
-	return callFn(name, params, resp, nil)
+func CallFunction(client *ParseClient, name string, params Params, resp interface{}) error {
+	return callFn(client, name, params, resp, nil)
 }
 
 type callFnT struct {
@@ -24,12 +24,15 @@ func (c *callFnT) method() string {
 	return "POST"
 }
 
-func (c *callFnT) endpoint() (string, error) {
-	p := path.Join(parseMountPoint, "functions", c.name)
+func (c *callFnT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
-	u.Scheme = parseScheme
-	u.Host = parseHost
-	u.Path = p
+	if client.isHosted() {
+		u.Path = path.Join(client.parseMountPoint, "functions", c.name)
+	} else {
+		u.Path = path.Join(client.version, "functions", c.name)
+	}
+	u.Scheme = client.parseScheme
+	u.Host = client.parseHost
 
 	return u.String(), nil
 }
@@ -55,7 +58,7 @@ type fnRespT struct {
 	Result interface{} `parse:"result"`
 }
 
-func callFn(name string, params Params, resp interface{}, currentSession *sessionT) error {
+func callFn(client *ParseClient, name string, params Params, resp interface{}, currentSession *sessionT) error {
 	rv := reflect.ValueOf(resp)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("resp must be a non-nil pointer")
@@ -70,7 +73,7 @@ func callFn(name string, params Params, resp interface{}, currentSession *sessio
 		params:         params,
 		currentSession: currentSession,
 	}
-	if b, err := defaultClient.doRequest(cr); err != nil {
+	if b, err := client.doRequest(cr); err != nil {
 		return err
 	} else {
 		r := fnRespT{}

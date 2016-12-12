@@ -220,8 +220,9 @@ type Query interface {
 }
 
 type queryT struct {
-	inst interface{}
-	op   opTypeT
+	inst   interface{}
+	client *ParseClient
+	op     opTypeT
 
 	instId    *string
 	orderBy   []string
@@ -240,7 +241,7 @@ type queryT struct {
 }
 
 // Create a new query instance.
-func NewQuery(v interface{}) (Query, error) {
+func NewQuery(v interface{}, client *ParseClient) (Query, error) {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return nil, errors.New("v must be a non-nil pointer")
@@ -248,6 +249,7 @@ func NewQuery(v interface{}) (Query, error) {
 
 	return &queryT{
 		inst:      v,
+		client:    client,
 		orderBy:   make([]string, 0),
 		where:     make(map[string]interface{}),
 		include:   make(map[string]struct{}),
@@ -264,7 +266,7 @@ func (q *queryT) UseMasterKey() Query {
 func (q *queryT) Get(id string) error {
 	q.op = otGet
 	q.instId = &id
-	if body, err := defaultClient.doRequest(q); err != nil {
+	if body, err := q.client.doRequest(q); err != nil {
 		return err
 	} else {
 		return handleResponse(body, q.inst)
@@ -694,7 +696,7 @@ func (q *queryT) Clone() Query {
 }
 
 func (q *queryT) Sub() Query {
-	q2, _ := NewQuery(q.inst)
+	q2, _ := NewQuery(q.inst, q.client)
 	return q2
 }
 
@@ -785,7 +787,7 @@ func (q *queryT) Each(rc interface{}) (*Iterator, error) {
 			s.Elem().Set(reflect.MakeSlice(sliceType, 0, 100))
 
 			// TODO: handle errors and retry if possible
-			b, err := defaultClient.doRequest(q)
+			b, err := q.client.doRequest(q)
 			if err != nil {
 				i.err = err
 				i.resChan <- err
@@ -836,7 +838,7 @@ func (q *queryT) SetBatchSize(size uint) Query {
 
 func (q *queryT) Find() error {
 	q.op = otQuery
-	if b, err := defaultClient.doRequest(q); err != nil {
+	if b, err := q.client.doRequest(q); err != nil {
 		return err
 	} else {
 		return handleResponse(b, q.inst)
@@ -855,7 +857,7 @@ func (q *queryT) First() error {
 		dv := reflect.New(reflect.SliceOf(rvi.Type()))
 		dv.Elem().Set(reflect.MakeSlice(reflect.SliceOf(rvi.Type()), 0, 1))
 
-		if b, err := defaultClient.doRequest(q); err != nil {
+		if b, err := q.client.doRequest(q); err != nil {
 			return err
 		} else if err := handleResponse(b, dv.Interface()); err != nil {
 			return err
@@ -866,7 +868,7 @@ func (q *queryT) First() error {
 			rv.Elem().Set(dv.Elem().Index(0))
 		}
 	} else if rvi.Kind() == reflect.Slice {
-		if b, err := defaultClient.doRequest(q); err != nil {
+		if b, err := q.client.doRequest(q); err != nil {
 			return err
 		} else if err := handleResponse(b, q.inst); err != nil {
 			return err
@@ -884,7 +886,7 @@ func (q *queryT) Count() (int64, error) {
 	q.count = &c
 
 	var count int64
-	if b, err := defaultClient.doRequest(q); err != nil {
+	if b, err := q.client.doRequest(q); err != nil {
 		return 0, err
 	} else {
 		err := handleResponse(b, &count)
@@ -945,9 +947,9 @@ func (q *queryT) method() string {
 	return "GET"
 }
 
-func (q *queryT) endpoint() (string, error) {
+func (q *queryT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
-	p := getEndpointBase(q.inst)
+	p := getEndpointBase(q.inst, client)
 
 	switch q.op {
 	case otGet:
@@ -959,8 +961,8 @@ func (q *queryT) endpoint() (string, error) {
 		return "", err
 	}
 
-	u.Scheme = parseScheme
-	u.Host = parseHost
+	u.Scheme = client.parseScheme
+	u.Host = client.parseHost
 	u.RawQuery = qs
 	u.Path = p
 

@@ -114,6 +114,7 @@ type Update interface {
 }
 
 type updateT struct {
+	client             *ParseClient
 	inst               interface{}
 	values             map[string]updateOpT
 	shouldUseMasterKey bool
@@ -124,7 +125,7 @@ type updateT struct {
 //
 // Note: v should be a pointer to a struct whose name represents a Parse class,
 // or that implements the ClassName method
-func NewUpdate(v interface{}) (Update, error) {
+func NewUpdate(v interface{}, client *ParseClient) (Update, error) {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return nil, errors.New("v must be a non-nil pointer")
@@ -132,6 +133,7 @@ func NewUpdate(v interface{}) (Update, error) {
 
 	return &updateT{
 		inst:   v,
+		client: client,
 		values: map[string]updateOpT{},
 	}, nil
 }
@@ -250,7 +252,7 @@ func (u *updateT) Execute() (err error) {
 			}
 		}
 	}
-	if b, err := defaultClient.doRequest(u); err != nil {
+	if b, err := u.client.doRequest(u); err != nil {
 		return err
 	} else {
 		return handleResponse(b, u.inst)
@@ -266,9 +268,9 @@ func (u *updateT) method() string {
 	return "PUT"
 }
 
-func (u *updateT) endpoint() (string, error) {
+func (u *updateT) endpoint(client *ParseClient) (string, error) {
 	_url := url.URL{}
-	p := getEndpointBase(u.inst)
+	p := getEndpointBase(u.inst, client)
 
 	rv := reflect.ValueOf(u.inst)
 	rvi := reflect.Indirect(rv)
@@ -282,8 +284,8 @@ func (u *updateT) endpoint() (string, error) {
 		return "", fmt.Errorf("can not update value - type has no Id field")
 	}
 
-	_url.Scheme = parseScheme
-	_url.Host = parseHost
+	_url.Scheme = client.parseScheme
+	_url.Host = client.parseHost
 	_url.Path = p
 
 	return _url.String(), nil
@@ -310,12 +312,12 @@ func (u *updateT) contentType() string {
 	return "application/json"
 }
 
-func LinkFacebookAccount(u *User, a *FacebookAuthData) error {
+func (client *ParseClient) LinkFacebookAccount(u *User, a *FacebookAuthData) error {
 	if u.Id == "" {
 		return errors.New("user Id field must not be empty")
 	}
 
-	up, _ := NewUpdate(u)
+	up, _ := NewUpdate(u, client)
 	up.Set("authData", AuthData{Facebook: a})
 	up.UseMasterKey()
 	return up.Execute()

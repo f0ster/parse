@@ -10,17 +10,17 @@ import (
 
 // Delete the instance of the type represented by v from the Parse database. If
 // useMasteKey=true, the Master Key will be used for the deletion request.
-func Delete(v interface{}, useMasterKey bool) error {
-	return _delete(v, useMasterKey, nil)
+func (c *ParseClient) Delete(v interface{}, useMasterKey bool) error {
+	return c._delete(v, useMasterKey, nil)
 }
 
-func _delete(v interface{}, useMasterKey bool, currentSession *sessionT) error {
+func (c *ParseClient) _delete(v interface{}, useMasterKey bool, currentSession *sessionT) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("v must be a non-nil pointer")
 	}
 
-	_, err := defaultClient.doRequest(&deleteT{inst: v, shouldUseMasterKey: useMasterKey, currentSession: currentSession})
+	_, err := c.doRequest(&deleteT{inst: v, shouldUseMasterKey: useMasterKey, currentSession: currentSession})
 	return err
 }
 
@@ -34,7 +34,7 @@ func (d *deleteT) method() string {
 	return "DELETE"
 }
 
-func (d *deleteT) endpoint() (string, error) {
+func (d *deleteT) endpoint(client *ParseClient) (string, error) {
 	var id string
 	rv := reflect.ValueOf(d.inst)
 	rvi := reflect.Indirect(rv)
@@ -48,10 +48,10 @@ func (d *deleteT) endpoint() (string, error) {
 		return "", fmt.Errorf("can not delete value - type has no Id field")
 	}
 
-	p := getEndpointBase(d.inst)
+	p := getEndpointBase(d.inst, client)
 	u := url.URL{}
-	u.Scheme = parseScheme
-	u.Host = parseHost
+	u.Scheme = client.parseScheme
+	u.Host = client.parseHost
 	u.Path = path.Join(p, id)
 
 	return u.String(), nil
