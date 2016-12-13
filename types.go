@@ -540,7 +540,7 @@ func getEndpointBase(v interface{}, client *ParseClient) string {
 		p = path.Join("classes", cname)
 	}
 
-	if client.isHosted() {
+	if !client.isHostedOnParseLegacy() {
 		p = path.Join(client.parseMountPoint, p)
 	} else {
 		p = path.Join(client.version, p)

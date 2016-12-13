@@ -26,7 +26,7 @@ func (c *callFnT) method() string {
 
 func (c *callFnT) endpoint(client *ParseClient) (string, error) {
 	u := url.URL{}
-	if client.isHosted() {
+	if !client.isHostedOnParseLegacy() {
 		u.Path = path.Join(client.parseMountPoint, "functions", c.name)
 	} else {
 		u.Path = path.Join(client.version, "functions", c.name)

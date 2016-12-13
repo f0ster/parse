@@ -161,7 +161,7 @@ func (s *loginRequestT) endpoint(client *ParseClient) (string, error) {
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost
 
-	if client.isHosted() {
+	if client.isHostedOnParseLegacy() {
 		//"api.parse.com"
 		if s.s != nil {
 			u.Path = path.Join(client.version, "users/me")

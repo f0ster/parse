@@ -84,7 +84,7 @@ func CreateParseClient(appId, restKey, masterKey string, host string, scheme str
 	}
 }
 
-func (client *ParseClient) isHosted() bool {
+func (client *ParseClient) isHostedOnParseLegacy() bool {
 	return client.parseHost == "api.parse.com"
 }
 
