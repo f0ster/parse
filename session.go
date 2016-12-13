@@ -161,7 +161,8 @@ func (s *loginRequestT) endpoint(client *ParseClient) (string, error) {
 	u.Scheme = client.parseScheme
 	u.Host = client.parseHost
 
-	if !client.isHosted() {
+	if client.isHosted() {
+		//"api.parse.com"
 		if s.s != nil {
 			u.Path = path.Join(client.version, "users/me")
 		} else if s.authdata != nil {
@@ -171,11 +172,11 @@ func (s *loginRequestT) endpoint(client *ParseClient) (string, error) {
 		}
 	} else {
 		if s.s != nil {
-			u.Path = path.Join(client.parseMountPoint, "1/users/me")
+			u.Path = path.Join(client.parseMountPoint, "users/me")
 		} else if s.authdata != nil {
-			u.Path = path.Join(client.parseMountPoint, "1/users")
+			u.Path = path.Join(client.parseMountPoint, "users")
 		} else {
-			u.Path = path.Join(client.parseMountPoint, "1/login")
+			u.Path = path.Join(client.parseMountPoint, "login")
 		}
 	}
 
