@@ -171,11 +171,11 @@ func (s *loginRequestT) endpoint(client *ParseClient) (string, error) {
 		}
 	} else {
 		if s.s != nil {
-			u.Path = path.Join(client.parseMountPoint, "users/me")
+			u.Path = path.Join(client.parseMountPoint, "1/users/me")
 		} else if s.authdata != nil {
-			u.Path = path.Join(client.parseMountPoint, "users")
+			u.Path = path.Join(client.parseMountPoint, "1/users")
 		} else {
-			u.Path = path.Join(client.parseMountPoint, "login")
+			u.Path = path.Join(client.parseMountPoint, "1/login")
 		}
 	}
 
