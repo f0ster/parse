@@ -73,6 +73,13 @@ type ParseClient struct {
 
 // CreateParseClient the parse library with your API keys
 func CreateParseClient(appId, restKey, masterKey string, host string, scheme string, mountPoint string) *ParseClient {
+	var version string
+	if host == "api.parse.com" {
+		version = "1"
+	} else {
+		version = "2"
+	}
+
 	return &ParseClient{
 		parseHost:       host,
 		parseScheme:     scheme,
@@ -80,12 +87,14 @@ func CreateParseClient(appId, restKey, masterKey string, host string, scheme str
 		appId:           appId,
 		restKey:         restKey,
 		masterKey:       masterKey,
+		version:	 version,
 		httpClient:      &http.Client{},
 	}
 }
 
 func (client *ParseClient) isHostedOnParseLegacy() bool {
-	return client.parseHost == "api.parse.com"
+	isHostedOnLegacy := client.parseHost == "api.parse.com"
+	return isHostedOnLegacy
 }
 
 // SetHTTPTimeout Set the timeout for requests to Parse
