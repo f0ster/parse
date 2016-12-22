@@ -38,15 +38,24 @@ type ParseError interface {
 	error
 	Code() int
 	Message() string
+	StatusCode() int
+	RequestMethod() string
+	RequestURL() string
+	RequestHeaders() []string
 }
 
 type parseErrorT struct {
-	ErrorCode    int    `json:"code" parse:"code"`
-	ErrorMessage string `json:"error" parse:"error"`
+	ErrorCode      int    `json:"code" parse:"code"`
+	ErrorMessage   string `json:"error" parse:"error"`
+	statusCode     int
+	requestHeaders []string
+	requestMethod  string
+	requestURL     string
 }
 
 func (e *parseErrorT) Error() string {
-	return fmt.Sprintf("error %d - %s", e.ErrorCode, e.ErrorMessage)
+	return fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v]",
+		e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders)
 }
 
 func (e *parseErrorT) Code() int {
@@ -55,6 +64,22 @@ func (e *parseErrorT) Code() int {
 
 func (e *parseErrorT) Message() string {
 	return e.ErrorMessage
+}
+
+func (e *parseErrorT) StatusCode() int {
+	return e.statusCode
+}
+
+func (e *parseErrorT) RequestMethod() string {
+	return e.requestMethod
+}
+
+func (e *parseErrorT) RequestURL() string {
+	return e.requestURL
+}
+
+func (e *parseErrorT) RequestHeadersssage() []string {
+	return e.requestHeaders
 }
 
 type ParseClient struct {
@@ -87,7 +112,7 @@ func CreateParseClient(appId, restKey, masterKey string, host string, scheme str
 		appId:           appId,
 		restKey:         restKey,
 		masterKey:       masterKey,
-		version:	 version,
+		version:         version,
 		httpClient:      &http.Client{},
 	}
 }
@@ -187,10 +212,24 @@ func (c *ParseClient) doRequest(op requestT) ([]byte, error) {
 		if err := json.Unmarshal(respBody, &ret); err != nil {
 			return nil, err
 		}
+
+		ret.statusCode = resp.StatusCode
+		ret.requestHeaders = headerToArray(req.Header)
+		ret.requestMethod = req.Method
+		ret.requestURL = req.URL.String()
 		return nil, &ret
 	}
 
 	return respBody, nil
+}
+
+func headerToArray(header http.Header) (res []string) {
+	for name, values := range header {
+		for _, value := range values {
+			res = append(res, fmt.Sprintf("%s: %s", name, value))
+		}
+	}
+	return
 }
 
 func handleResponse(body []byte, dst interface{}) error {
