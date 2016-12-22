@@ -61,11 +61,11 @@ type parseErrorT struct {
 }
 
 func (e *parseErrorT) Error() string {
-	errStr := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v]\n",
-		e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders)
-	fmt.Printf(errStr)
-	return errStr
+	errorMsg := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v %v]\n",e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders, e.requestBody)
+	fmt.Printf(errorMsg)
+	return errorMsg
 }
+
 
 func (e *parseErrorT) Code() int {
 	return e.ErrorCode
