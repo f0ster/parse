@@ -38,17 +38,29 @@ type ParseError interface {
 	error
 	Code() int
 	Message() string
+	StatusCode() int
+	RequestMethod() string
+	RequestURL() string
+	RequestHeaders() []string
+	RequestBody() string
 }
 
 type parseErrorT struct {
-	ErrorCode    int    `json:"code" parse:"code"`
-	ErrorMessage string `json:"error" parse:"error"`
+	ErrorCode      int    `json:"code" parse:"code"`
+	ErrorMessage   string `json:"error" parse:"error"`
+	statusCode     int
+	requestHeaders []string
+	requestMethod  string
+	requestURL     string
+	requestBody    string
 }
 
 func (e *parseErrorT) Error() string {
+
 	errorMsg := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v %v]\n",e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders, e.requestBody)
 	fmt.Printf(errorMsg)
 	return errorMsg
+
 }
 
 
@@ -58,6 +70,26 @@ func (e *parseErrorT) Code() int {
 
 func (e *parseErrorT) Message() string {
 	return e.ErrorMessage
+}
+
+func (e *parseErrorT) StatusCode() int {
+	return e.statusCode
+}
+
+func (e *parseErrorT) RequestMethod() string {
+	return e.requestMethod
+}
+
+func (e *parseErrorT) RequestURL() string {
+	return e.requestURL
+}
+
+func (e *parseErrorT) RequestHeadersssage() []string {
+	return e.requestHeaders
+}
+
+func (e *parseErrorT) RequestBody() string {
+	return e.requestBody
 }
 
 type ParseClient struct {
@@ -90,7 +122,7 @@ func CreateParseClient(appId, restKey, masterKey string, host string, scheme str
 		appId:           appId,
 		restKey:         restKey,
 		masterKey:       masterKey,
-		version:	 version,
+		version:         version,
 		httpClient:      &http.Client{},
 	}
 }
@@ -190,10 +222,36 @@ func (c *ParseClient) doRequest(op requestT) ([]byte, error) {
 		if err := json.Unmarshal(respBody, &ret); err != nil {
 			return nil, err
 		}
+
+		ret.statusCode = resp.StatusCode
+		ret.requestHeaders = headerToArray(req.Header)
+		ret.requestMethod = req.Method
+		if req.Method != "GET" {
+			b, err := op.body()
+			if err == nil {
+				ret.requestBody = b
+			}
+		}
+		ret.requestURL = req.URL.String()
 		return nil, &ret
 	}
 
 	return respBody, nil
+}
+
+func headerToArray(header http.Header) (res []string) {
+	for name, values := range header {
+		for _, value := range values {
+			var val string
+			if len(value) >= 10 {
+				val = value[0:10]
+			} else {
+				val = value
+			}
+			res = append(res, fmt.Sprintf("%s: %s", name, val))
+		}
+	}
+	return
 }
 
 func handleResponse(body []byte, dst interface{}) error {
