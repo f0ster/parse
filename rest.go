@@ -42,6 +42,7 @@ type ParseError interface {
 	RequestMethod() string
 	RequestURL() string
 	RequestHeaders() []string
+	RequestBody() string
 }
 
 type parseErrorT struct {
@@ -51,11 +52,12 @@ type parseErrorT struct {
 	requestHeaders []string
 	requestMethod  string
 	requestURL     string
+	requestBody    string
 }
 
 func (e *parseErrorT) Error() string {
-	return fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v]",
-		e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders)
+	return fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v %v]",
+		e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders, e.requestBody)
 }
 
 func (e *parseErrorT) Code() int {
@@ -80,6 +82,10 @@ func (e *parseErrorT) RequestURL() string {
 
 func (e *parseErrorT) RequestHeadersssage() []string {
 	return e.requestHeaders
+}
+
+func (e *parseErrorT) RequestBody() string {
+	return e.requestBody
 }
 
 type ParseClient struct {
@@ -216,6 +222,12 @@ func (c *ParseClient) doRequest(op requestT) ([]byte, error) {
 		ret.statusCode = resp.StatusCode
 		ret.requestHeaders = headerToArray(req.Header)
 		ret.requestMethod = req.Method
+		if req.Method != "GET" {
+			b, err := op.body()
+			if err == nil {
+				ret.requestBody = b
+			}
+		}
 		ret.requestURL = req.URL.String()
 		return nil, &ret
 	}
