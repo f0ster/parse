@@ -47,6 +47,7 @@ type ParseError interface {
 	RequestMethod() string
 	RequestURL() string
 	RequestHeaders() []string
+	RequestBody() string
 }
 
 type parseErrorT struct {
@@ -56,6 +57,7 @@ type parseErrorT struct {
 	requestHeaders []string
 	requestMethod  string
 	requestURL     string
+	requestBody    string
 }
 
 func (e *parseErrorT) Error() string {
@@ -101,7 +103,12 @@ func (e *parseErrorT) RequestHeadersssage() []string {
 	return e.requestHeaders
 }
 
+
 var defaultClient *clientT
+
+func (e *parseErrorT) RequestBody() string {
+	return e.requestBody
+}
 
 
 // Initialize the parse library with your API keys
@@ -246,6 +253,12 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		ret.statusCode = resp.StatusCode
 		ret.requestHeaders = headerToArray(req.Header)
 		ret.requestMethod = req.Method
+		if req.Method != "GET" {
+			b, err := op.body()
+			if err == nil {
+				ret.requestBody = b
+			}
+		}
 		ret.requestURL = req.URL.String()
 		return nil, &ret
 	}
