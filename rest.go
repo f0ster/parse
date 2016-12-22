@@ -238,7 +238,13 @@ func (c *ParseClient) doRequest(op requestT) ([]byte, error) {
 func headerToArray(header http.Header) (res []string) {
 	for name, values := range header {
 		for _, value := range values {
-			res = append(res, fmt.Sprintf("%s: %s", name, value))
+			var val string
+			if len(value) >= 10 {
+				val = value[0:10]
+			} else {
+				val = value
+			}
+			res = append(res, fmt.Sprintf("%s: %s", name, val))
 		}
 	}
 	return
