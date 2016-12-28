@@ -25,6 +25,7 @@ const (
 var parseHost string
 var parseScheme string
 var parseMountPoint string
+var parseInitialized bool
 
 //var parseHost = "api.parse.com"
 var fieldNameCache map[reflect.Type]map[string]string = make(map[reflect.Type]map[string]string)
@@ -113,16 +114,21 @@ func (e *parseErrorT) RequestBody() string {
 
 // Initialize the parse library with your API keys
 func Initialize(appId, restKey, masterKey string, host string, scheme string, mountPoint string) {
-	defaultClient = &clientT{
-		appId:      appId,
-		restKey:    restKey,
-		masterKey:  masterKey,
-		userAgent:  "github.com/kylemcc/parse",
-		httpClient: &http.Client{},
+	if(!parseInitialized) {
+		defaultClient = &clientT{
+			appId:      appId,
+			restKey:    restKey,
+			masterKey:  masterKey,
+			userAgent:  "github.com/kylemcc/parse",
+			httpClient: &http.Client{},
+		}
+		parseHost = host
+		parseScheme = scheme
+		parseMountPoint = mountPoint
+		parseInitialized = true
+	} else {
+		fmt.Printf("Parse initialized was called twice, exiting without re-initialization!\n")
 	}
-	parseHost = host
-	parseScheme = scheme
-	parseMountPoint = mountPoint
 }
 
 // Set the timeout for requests to Parse
