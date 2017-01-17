@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"sync"
+
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	awsCreds "github.com/aws/aws-sdk-go/aws/credentials"
 	awssession "github.com/aws/aws-sdk-go/aws/session"
@@ -18,6 +20,8 @@ import (
 var registry = metrics.NewRegistry()
 var timers map[string]metrics.Timer
 var counters map[string]metrics.Meter
+var timerMutex = &sync.Mutex{}
+var counterMutex = &sync.Mutex{}
 
 func updateTimer(name string, ts time.Time) {
 	if timers == nil {
@@ -25,8 +29,12 @@ func updateTimer(name string, ts time.Time) {
 	}
 
 	if timers[name] == nil {
-		timers[name] = metrics.NewTimer()
-		registry.GetOrRegister(fmt.Sprintf("parse-timer:%s", name), timers[name])
+		timerMutex.Lock()
+		if timers[name] == nil {
+			timers[name] = metrics.NewTimer()
+			registry.GetOrRegister(fmt.Sprintf("parse-timer:%s", name), timers[name])
+		}
+		timerMutex.Unlock()
 	}
 	timers[name].UpdateSince(ts)
 }
@@ -37,8 +45,12 @@ func incrementCounter(name string, value int64) {
 	}
 
 	if counters[name] == nil {
-		counters[name] = metrics.NewMeter()
-		registry.GetOrRegister(fmt.Sprintf("parse-counter:%s", name), counters[name])
+		counterMutex.Lock()
+		if counters[name] == nil {
+			counters[name] = metrics.NewMeter()
+			registry.GetOrRegister(fmt.Sprintf("parse-counter:%s", name), counters[name])
+		}
+		counterMutex.Unlock()
 	}
 	counters[name].Mark(value)
 
