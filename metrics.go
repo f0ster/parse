@@ -37,7 +37,7 @@ func updateTimer(name string, ts time.Time) {
 }
 
 func incrementCounter(name string, value int64) {
-	if timers == nil {
+	if counters == nil {
 		counters = map[string]metrics.Meter{}
 	}
 
