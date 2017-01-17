@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -183,6 +184,8 @@ func SetHTTPClient(c *http.Client) error {
 	return nil
 }
 
+var re = regexp.MustCompile(`\/(.*)\/`)
+
 func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	start := time.Now()
 	ep, err := op.endpoint()
@@ -250,6 +253,11 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		reader = resp.Body
 	}
 
+	metricPath := ""
+	if tempP := re.FindAllString(req.URL.Path, -1); len(tempP) > 0 {
+		metricPath = tempP[0]
+	}
+
 	respBody, err := ioutil.ReadAll(reader)
 
 	// Error formats are consistent. If the response is an error,
@@ -273,14 +281,14 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		}
 		ret.requestURL = req.URL.String()
 		incrementCounter("error", 1)
-		incrementCounter(fmt.Sprintf("error-%s-%d", req.URL.Path, resp.StatusCode), 1)
+		incrementCounter(fmt.Sprintf("error-%s-%d", metricPath, resp.StatusCode), 1)
 		return nil, &ret
 	}
 
 	incrementCounter("request", 1)
 	updateTimer("request", start)
-	incrementCounter(fmt.Sprintf("error-%s-%d", req.URL.Path, resp.StatusCode), 1)
-	updateTimer(fmt.Sprintf("error-%s-%d", req.URL.Path, resp.StatusCode), start)
+	incrementCounter(fmt.Sprintf("error-%s-%d", metricPath, resp.StatusCode), 1)
+	updateTimer(fmt.Sprintf("error-%s-%d", metricPath, resp.StatusCode), start)
 
 	return respBody, nil
 }
