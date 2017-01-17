@@ -63,13 +63,11 @@ type parseErrorT struct {
 	responseBody   string
 }
 
-
 func (e *parseErrorT) Error() string {
-	errorMsg := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %v %v] Response[%d %s]\n",e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.requestHeaders, e.requestBody, e.statusCode, e.responseBody)
+	errorMsg := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %v %v] Response[%d %s]\n", e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.requestHeaders, e.requestBody, e.statusCode, e.responseBody)
 	fmt.Printf(errorMsg)
 	return errorMsg
 }
-
 
 func (e *parseErrorT) Code() int {
 	return e.ErrorCode
@@ -78,7 +76,6 @@ func (e *parseErrorT) Code() int {
 func (e *parseErrorT) Message() string {
 	return e.ErrorMessage
 }
-
 
 type clientT struct {
 	appId     string
@@ -110,17 +107,15 @@ func (e *parseErrorT) RequestHeadersssage() []string {
 	return e.requestHeaders
 }
 
-
 var defaultClient *clientT
 
 func (e *parseErrorT) RequestBody() string {
 	return e.requestBody
 }
 
-
 // Initialize the parse library with your API keys
 func Initialize(appId, restKey, masterKey string, host string, scheme string, mountPoint string) {
-	if(!parseInitialized) {
+	if !parseInitialized {
 		defaultClient = &clientT{
 			appId:      appId,
 			restKey:    restKey,
@@ -253,7 +248,8 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	if err != nil {
 		ret := parseErrorT{}
 		if err := json.Unmarshal(respBody, &ret); err != nil {
-			return nil, err
+			ret.Code = -1
+			ret.Error = err
 		}
 
 		ret.statusCode = resp.StatusCode
@@ -295,7 +291,6 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 
 	return respBody, nil
 }
-
 
 func headerToArray(header http.Header) (res []string) {
 	for name, values := range header {
