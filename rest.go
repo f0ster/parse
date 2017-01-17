@@ -287,8 +287,8 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 
 	incrementCounter("request", 1)
 	updateTimer("request", start)
-	incrementCounter(fmt.Sprintf("error-%s-%d", metricPath, resp.StatusCode), 1)
-	updateTimer(fmt.Sprintf("error-%s-%d", metricPath, resp.StatusCode), start)
+	incrementCounter(fmt.Sprintf("request-%s-%d", metricPath, resp.StatusCode), 1)
+	updateTimer(fmt.Sprintf("request-%s-%d", metricPath, resp.StatusCode), start)
 
 	return respBody, nil
 }
