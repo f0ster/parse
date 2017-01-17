@@ -273,7 +273,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		}
 		ret.requestURL = req.URL.String()
 		incrementCounter("error", 1)
-		incrementCounter(fmt.Sprintf("error-%s-%d", req.URL.String(), resp.StatusCode), 1)
+		incrementCounter(fmt.Sprintf("error-%s-%d", req.URL.Path, resp.StatusCode), 1)
 		return nil, &ret
 	}
 
