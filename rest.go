@@ -49,6 +49,7 @@ type ParseError interface {
 	RequestURL() string
 	RequestHeaders() []string
 	RequestBody() string
+	ResponseBody() string
 }
 
 type parseErrorT struct {
@@ -59,10 +60,12 @@ type parseErrorT struct {
 	requestMethod  string
 	requestURL     string
 	requestBody    string
+	responseBody   string
 }
 
+
 func (e *parseErrorT) Error() string {
-	errorMsg := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %d %v %v]\n",e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.statusCode, e.requestHeaders, e.requestBody)
+	errorMsg := fmt.Sprintf("ERROR: ParseError [ErrorCode: %d, ErrorMessage: %s] Request[%s %s %v %v] Response[%d %s]\n",e.ErrorCode, e.ErrorMessage, e.requestMethod, e.requestURL, e.requestHeaders, e.requestBody, e.statusCode, e.responseBody)
 	fmt.Printf(errorMsg)
 	return errorMsg
 }
@@ -90,6 +93,9 @@ type clientT struct {
 
 func (e *parseErrorT) StatusCode() int {
 	return e.statusCode
+}
+func (e *parseErrorT) ResponseBody() string {
+	return e.responseBody
 }
 
 func (e *parseErrorT) RequestMethod() string {
@@ -245,7 +251,24 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 
 	respBody, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		ret := parseErrorT{}
+		if err := json.Unmarshal(respBody, &ret); err != nil {
+			return nil, err
+		}
+
+		ret.statusCode = resp.StatusCode
+		ret.requestHeaders = headerToArray(req.Header)
+		ret.requestMethod = req.Method
+		ret.responseBody = string(respBody)
+		if req.Method != "GET" {
+			b, err := op.body()
+			if err == nil {
+				ret.requestBody = b
+			}
+		}
+		ret.requestURL = req.URL.String()
+		return nil, &ret
+
 	}
 
 	// Error formats are consistent. If the response is an error,
@@ -259,6 +282,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		ret.statusCode = resp.StatusCode
 		ret.requestHeaders = headerToArray(req.Header)
 		ret.requestMethod = req.Method
+		ret.responseBody = string(respBody)
 		if req.Method != "GET" {
 			b, err := op.body()
 			if err == nil {
@@ -271,6 +295,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 
 	return respBody, nil
 }
+
 
 func headerToArray(header http.Header) (res []string) {
 	for name, values := range header {
