@@ -248,8 +248,8 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	if err != nil {
 		ret := parseErrorT{}
 		if err := json.Unmarshal(respBody, &ret); err != nil {
-			ret.Code = -1
-			ret.Error = err
+			ret.ErrorCode = -1
+			ret.ErrorMessage = err.Error()
 		}
 
 		ret.statusCode = resp.StatusCode
