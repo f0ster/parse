@@ -15,6 +15,7 @@ import (
 	"github.com/sclasen/go-metrics-cloudwatch/reporter"
 )
 
+var registry = metrics.NewRegistry()
 var timers map[string]metrics.Timer
 var counters map[string]metrics.Meter
 
@@ -25,7 +26,7 @@ func updateTimer(name string, ts time.Time) {
 
 	if timers[name] == nil {
 		timers[name] = metrics.NewTimer()
-		metrics.GetOrRegister(fmt.Sprintf("parse-%s-timer", name), timers[name]) //todo change this string naming
+		registry.GetOrRegister(fmt.Sprintf("parse-%s-timer", name), timers[name]) //todo change this string naming
 	}
 	timers[name].UpdateSince(ts)
 }
@@ -37,7 +38,7 @@ func incrementCounter(name string, value int64) {
 
 	if counters[name] == nil {
 		counters[name] = metrics.NewMeter()
-		metrics.GetOrRegister(fmt.Sprintf("parse-%s-counter", name), counters[name]) //todo change this string naming
+		registry.GetOrRegister(fmt.Sprintf("parse-%s-counter", name), counters[name]) //todo change this string naming
 	}
 	counters[name].Mark(value)
 
@@ -63,7 +64,7 @@ func SetupMetricExternalLogging(cloudwatchAccessKey string, cloudwatchAccessSecr
 		ReportingInterval: 1 * time.Minute,
 		StaticDimensions:  map[string]string{"name": "value"},
 	}
-	go reporter.Cloudwatch(metrics.DefaultRegistry, metricsConf)
+	go reporter.Cloudwatch(registry, metricsConf)
 }
 
 // SetupMetricFileLogging will setup sending the counter to a file
@@ -76,7 +77,7 @@ func SetupMetricFileLogging(metricFilePath string) {
 			fmt.Printf("error open metric file, no metrics will be logged.")
 			fmt.Printf(err.Error())
 		} else {
-			go metrics.Log(metrics.DefaultRegistry, 1*time.Minute, log.New(metricsLog, "metrics: ", log.Lmicroseconds))
+			go metrics.Log(registry, 1*time.Minute, log.New(metricsLog, "metrics: ", log.Lmicroseconds))
 		}
 
 	}
