@@ -280,15 +280,24 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 			}
 		}
 		ret.requestURL = req.URL.String()
+		// count errors
 		incrementCounter("error", 1)
-		incrementCounter(fmt.Sprintf("error-%s-%d", metricPath, resp.StatusCode), 1)
+		incrementCounter(fmt.Sprintf("error-code_%d", resp.StatusCode), 1)
+
+		//timer
+		updateTimer(fmt.Sprintf("error-%s_%d", metricPath, resp.StatusCode), start)
+		updateTimer(fmt.Sprintf("error-%s_%s_%d", metricPath, req.Method, resp.StatusCode), start)
+
+		//update over all ones
+		updateTimer("request", start)
+		updateTimer(fmt.Sprintf("request-%s_%d", metricPath, resp.StatusCode), start)
+		updateTimer(fmt.Sprintf("request-%s_%s_%d", metricPath, req.Method, resp.StatusCode), start)
 		return nil, &ret
 	}
 
-	incrementCounter("request", 1)
 	updateTimer("request", start)
-	incrementCounter(fmt.Sprintf("request-%s-%d", metricPath, resp.StatusCode), 1)
-	updateTimer(fmt.Sprintf("request-%s-%d", metricPath, resp.StatusCode), start)
+	updateTimer(fmt.Sprintf("request-%s_%d", metricPath, resp.StatusCode), start)
+	updateTimer(fmt.Sprintf("request-%s_%s_%d", metricPath, req.Method, resp.StatusCode), start)
 
 	return respBody, nil
 }

@@ -26,7 +26,7 @@ func updateTimer(name string, ts time.Time) {
 
 	if timers[name] == nil {
 		timers[name] = metrics.NewTimer()
-		registry.GetOrRegister(fmt.Sprintf("parse-%s-timer", name), timers[name]) //todo change this string naming
+		registry.GetOrRegister(fmt.Sprintf("parse-timer:%s", name), timers[name]) //todo change this string naming
 	}
 	timers[name].UpdateSince(ts)
 }
@@ -38,7 +38,7 @@ func incrementCounter(name string, value int64) {
 
 	if counters[name] == nil {
 		counters[name] = metrics.NewMeter()
-		registry.GetOrRegister(fmt.Sprintf("parse-%s-counter", name), counters[name]) //todo change this string naming
+		registry.GetOrRegister(fmt.Sprintf("parse-counter:%s", name), counters[name]) //todo change this string naming
 	}
 	counters[name].Mark(value)
 
