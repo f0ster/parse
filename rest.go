@@ -28,7 +28,7 @@ var parseMountPoint string
 var parseInitialized bool
 
 //var parseHost = "api.parse.com"
-var fieldNameCache map[reflect.Type]map[string]string = make(map[reflect.Type]map[string]string)
+var fieldNameCache = make(map[reflect.Type]map[string]string)
 var fieldCache = make(map[reflect.Type]reflect.StructField)
 
 type requestT interface {
@@ -40,7 +40,8 @@ type requestT interface {
 	contentType() string
 }
 
-type ParseError interface {
+// Error is the all the methods you can call on a parse error
+type Error interface {
 	error
 	Code() int
 	Message() string
@@ -114,10 +115,10 @@ func (e *parseErrorT) RequestBody() string {
 }
 
 // Initialize the parse library with your API keys
-func Initialize(appId, restKey, masterKey string, host string, scheme string, mountPoint string) {
+func Initialize(appID, restKey, masterKey string, host string, scheme string, mountPoint string) {
 	if !parseInitialized {
 		defaultClient = &clientT{
-			appId:      appId,
+			appId:      appID,
 			restKey:    restKey,
 			masterKey:  masterKey,
 			userAgent:  "github.com/kylemcc/parse",
@@ -132,7 +133,7 @@ func Initialize(appId, restKey, masterKey string, host string, scheme string, mo
 	}
 }
 
-// Set the timeout for requests to Parse
+// SetHTTPTimeout Set the timeout for requests to Parse
 //
 // Returns an error if called before parse.Initialize
 func SetHTTPTimeout(t time.Duration) error {
@@ -144,7 +145,7 @@ func SetHTTPTimeout(t time.Duration) error {
 	return nil
 }
 
-// Set the User Agent to be specified for requests against Parse
+// SetUserAgent Set the User Agent to be specified for requests against Parse
 //
 // Returns an error if called before parse.Initialize
 func SetUserAgent(ua string) error {
@@ -156,8 +157,7 @@ func SetUserAgent(ua string) error {
 	return nil
 }
 
-// Set the maximum number of requests per second, with an optional
-// burst rate.
+// SetRateLimit Set the maximum number of requests per second, with an optional burst rate.
 //
 // Returns an error if called before parse.Initialize
 //
@@ -173,6 +173,7 @@ func SetRateLimit(limit, burst uint) error {
 	return nil
 }
 
+//SetHTTPClient provide an httpClient for the rest calls
 func SetHTTPClient(c *http.Client) error {
 	if defaultClient == nil {
 		return errors.New("parse.Initialize must be called before parse.SetHTTPTimeout")
@@ -183,8 +184,10 @@ func SetHTTPClient(c *http.Client) error {
 }
 
 func (c *clientT) doRequest(op requestT) ([]byte, error) {
+	start := time.Now()
 	ep, err := op.endpoint()
 	if err != nil {
+		incrementCounter("error", 1)
 		return nil, err
 	}
 
@@ -193,6 +196,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	if method == "POST" || method == "PUT" {
 		b, err := op.body()
 		if err != nil {
+			incrementCounter("error", 1)
 			return nil, err
 		}
 		body = strings.NewReader(b)
@@ -200,6 +204,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 
 	req, err := http.NewRequest(method, ep, body)
 	if err != nil {
+		incrementCounter("error", 1)
 		return nil, err
 	}
 
@@ -235,17 +240,21 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	var reader io.ReadCloser
 	switch resp.Header.Get("Content-Encoding") {
 	case "gzip":
-		if r, err := gzip.NewReader(resp.Body); err != nil {
+		r, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			incrementCounter("error", 1)
 			return nil, err
-		} else {
-			reader = r
 		}
+		reader = r
 	default:
 		reader = resp.Body
 	}
 
 	respBody, err := ioutil.ReadAll(reader)
-	if err != nil {
+
+	// Error formats are consistent. If the response is an error,
+	// return a ParseError
+	if err != nil || !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
 		ret := parseErrorT{}
 		if err := json.Unmarshal(respBody, &ret); err != nil {
 			ret.ErrorCode = -1
@@ -263,31 +272,15 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 			}
 		}
 		ret.requestURL = req.URL.String()
-		return nil, &ret
-
-	}
-
-	// Error formats are consistent. If the response is an error,
-	// return a ParseError
-	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-		ret := parseErrorT{}
-		if err := json.Unmarshal(respBody, &ret); err != nil {
-			return nil, err
-		}
-
-		ret.statusCode = resp.StatusCode
-		ret.requestHeaders = headerToArray(req.Header)
-		ret.requestMethod = req.Method
-		ret.responseBody = string(respBody)
-		if req.Method != "GET" {
-			b, err := op.body()
-			if err == nil {
-				ret.requestBody = b
-			}
-		}
-		ret.requestURL = req.URL.String()
+		incrementCounter("error", 1)
+		incrementCounter(fmt.Sprintf("error-%s-%d", req.URL.String(), resp.StatusCode), 1)
 		return nil, &ret
 	}
+
+	incrementCounter("request", 1)
+	updateTimer("request", start)
+	incrementCounter(ep, 1)
+	updateTimer(ep, start)
 
 	return respBody, nil
 }
@@ -296,7 +289,7 @@ func headerToArray(header http.Header) (res []string) {
 	for name, values := range header {
 		for _, value := range values {
 			var val string
-			if len(value) >= 10 {
+			if len(value) >= 10 { // cleaning the headers a bit so we are not putting full keys in the log files
 				val = value[0:10]
 			} else {
 				val = value
