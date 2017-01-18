@@ -184,7 +184,7 @@ func SetHTTPClient(c *http.Client) error {
 	return nil
 }
 
-var re = regexp.MustCompile(`\/(.*)\/`)
+var re = regexp.MustCompile(`^\/$|\/.*|\/`)
 
 func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	start := time.Now()
@@ -253,7 +253,7 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		reader = resp.Body
 	}
 
-	metricPath := ""
+	metricPath := "/" // default to root
 	if tempP := re.FindAllString(req.URL.Path, -1); len(tempP) > 0 {
 		metricPath = tempP[0]
 	}
@@ -282,22 +282,22 @@ func (c *clientT) doRequest(op requestT) ([]byte, error) {
 		ret.requestURL = req.URL.String()
 		// count errors
 		incrementCounter("error", 1)
-		incrementCounter(fmt.Sprintf("error-code_%d", resp.StatusCode), 1)
+		incrementCounter(fmt.Sprintf("error:%d", resp.StatusCode), 1)
 
 		//timer
-		updateTimer(fmt.Sprintf("error-%s_%d", metricPath, resp.StatusCode), start)
-		updateTimer(fmt.Sprintf("error-%s_%s_%d", metricPath, req.Method, resp.StatusCode), start)
+		updateTimer(fmt.Sprintf("error:%s:%d", metricPath, resp.StatusCode), start)
+		updateTimer(fmt.Sprintf("error:%s:%s:%d", metricPath, req.Method, resp.StatusCode), start)
 
 		//update over all ones
 		updateTimer("request", start)
-		updateTimer(fmt.Sprintf("request-%s_%d", metricPath, resp.StatusCode), start)
-		updateTimer(fmt.Sprintf("request-%s_%s_%d", metricPath, req.Method, resp.StatusCode), start)
+		updateTimer(fmt.Sprintf("request:%s:%d", metricPath, resp.StatusCode), start)
+		updateTimer(fmt.Sprintf("request:%s:%s:%d", metricPath, req.Method, resp.StatusCode), start)
 		return nil, &ret
 	}
 
 	updateTimer("request", start)
-	updateTimer(fmt.Sprintf("request-%s_%d", metricPath, resp.StatusCode), start)
-	updateTimer(fmt.Sprintf("request-%s_%s_%d", metricPath, req.Method, resp.StatusCode), start)
+	updateTimer(fmt.Sprintf("request:%s:%d", metricPath, resp.StatusCode), start)
+	updateTimer(fmt.Sprintf("request:%s:%s:%d", metricPath, req.Method, resp.StatusCode), start)
 
 	return respBody, nil
 }

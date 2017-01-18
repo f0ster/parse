@@ -32,7 +32,7 @@ func updateTimer(name string, ts time.Time) {
 		timerMutex.Lock()
 		if timers[name] == nil {
 			timers[name] = metrics.NewTimer()
-			registry.GetOrRegister(fmt.Sprintf("parse-timer:%s", name), timers[name])
+			registry.GetOrRegister(fmt.Sprintf("parse_%s", name), timers[name])
 		}
 		timerMutex.Unlock()
 	}
@@ -48,7 +48,7 @@ func incrementCounter(name string, value int64) {
 		counterMutex.Lock()
 		if counters[name] == nil {
 			counters[name] = metrics.NewMeter()
-			registry.GetOrRegister(fmt.Sprintf("parse-counter:%s", name), counters[name])
+			registry.GetOrRegister(fmt.Sprintf("parse_%s", name), counters[name])
 		}
 		counterMutex.Unlock()
 	}
