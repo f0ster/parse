@@ -184,7 +184,7 @@ func SetHTTPClient(c *http.Client) error {
 	return nil
 }
 
-var re = regexp.MustCompile(`^\/$|\/.*|\/`)
+var re = regexp.MustCompile(`\/(.*)\/`)
 
 func (c *clientT) doRequest(op requestT) ([]byte, error) {
 	start := time.Now()
