@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"time"
 )
 
@@ -56,7 +57,7 @@ func (p *pushT) endpoint() (string, error) {
 	u := url.URL{}
 	u.Scheme = parseScheme
 	u.Host = parseHost
-	u.Path = "/1/push"
+	u.Path = path.Join(parseMountPoint, "push")
 
 	return u.String(), nil
 }
