@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-    q.EqualTo("email", "@gmail.com")
+    q.EqualTo("email", "cooluser@gmail.com")
     q.GreaterThan("numFollowers", 10).OrderBy("-createdAt") // API is chainable
     err := q.First()
     if err != nil {
