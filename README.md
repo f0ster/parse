@@ -1,17 +1,13 @@
 #Parse
 
-[![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/kylemcc/parse) [![license](http://img.shields.io/badge/license-BSD-red.svg?style=flat)](https://raw.githubusercontent.com/kylemcc/parse/master/LICENSE)
+[![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/f0ster/parse) [![license](http://img.shields.io/badge/license-BSD-red.svg?style=flat)](https://raw.githubusercontent.com/f0ster/parse/master/LICENSE)
 
-This package provides a client for Parse's REST API. So far, it supports most of the query operations
-provided by Parse's [Javascript library](https://parse.com/docs/js/symbols/Parse.Query.html), with a
-few exceptions (listed below under TODO).
+
+This is a go lib for using parse-server, it has been unofficially tested with the android and iOS parse SDKs, and parse for nodejs.  
 
 ###Installation
 
-    go get github.com/kylemcc/parse
-
-###Documentation
-[Full documentation](http://godoc.org/github.com/kylemcc/parse) is provided by [godoc.org](http://godoc.org)
+    go get github.com/f0ster/parse
 
 ###Usage:
 ```go
@@ -21,18 +17,21 @@ import (
     "fmt"
 	"time"
     
-    "github.com/kylemcc/parse"
+    "github.com/f0ster/parse"
 )
 
 func main() {
-    parse.Initialize("APP_ID", "REST_KEY", "MASTER_KEY") // master key is optional
+    // the last argument is a mount point where parse-server is used an express app, at the specified host
+    parse.Initialize(viper.GetString("parse_app_id"), viper.GetString("parse_rest_key"), viper.GetString("parse_master_key"), "parse-server-hostname.coolwebsite.com", "http", "/parse")
+    parse.SetUserAgent("myapi.coolwebsite.com")
     
+
     user := parse.User{}
     q, err := parse.NewQuery(&user)
 	if err != nil {
 		panic(err)
 	}
-    q.EqualTo("email", "kylemcc@gmail.com")
+    q.EqualTo("email", "@gmail.com")
     q.GreaterThan("numFollowers", 10).OrderBy("-createdAt") // API is chainable
     err := q.First()
     if err != nil {
@@ -69,6 +68,7 @@ func main() {
 ```
 
 ###TODO
+- Add structured logging
 - Missing query operations
 	- Related to
 - Missing CRUD operations:
